@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'dart:math';
 
@@ -8,11 +10,11 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   List<Beacon> beacons = [
-    Beacon(id: 'A', x: 50, y: 80, distance: 50),
-    Beacon(id: 'B', x: 350, y: 80, distance: 70),
-    Beacon(id: 'C', x: 200, y: 700, distance: 70),
+    Beacon(num: 0, x: 50, y: 80, distance: 100),
+    Beacon(num: 1, x: 350, y: 80, distance: 50),
+    Beacon(num: 2, x: 200, y: 700, distance: 300),
   ];
-  Position? position;
+  Position? currentPosition;
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +25,12 @@ class _MapScreenState extends State<MapScreen> {
       body: GestureDetector(
         onTapDown: (details) {
           setState(() {
-            position = calculateCurrentPosition(details.localPosition);
+            currentPosition = calculateCurrentPosition(details.localPosition);
           });
         },
         child: CustomPaint(
-          foregroundPainter: MapPainter(beacons: beacons, position: position),
+          foregroundPainter: MapPainter(
+              beacons: beacons, currentPosition: currentPosition),
           child: Container(
             // Set the background image path here
             decoration: BoxDecoration(
@@ -43,75 +46,52 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Position? calculateCurrentPosition(Offset tapPosition) {
-    List<Beacon> availableBeacons = beacons.where((beacon) => beacon.distance != null).toList();
+    List<Beacon> availableBeacons = beacons.where((beacon) =>
+    beacon.distance != null).toList();
     if (availableBeacons.length < 3) {
       return null; // Not enough beacons to perform trilateration
     }
 
-    List<Point> points = availableBeacons.map((beacon) => Point(beacon.x, beacon.y)).toList();
-    List<double> distances = availableBeacons.map((beacons) => beacons.distance!).toList();
+    double x1 = beacons[0].x;
+    double y1 = beacons[0].y;
+    double x2 = beacons[1].x;
+    double y2 = beacons[1].y;
+    double x3 = beacons[2].x;
+    double y3 = beacons[2].y;
 
-    // Perform trilateration calculation
-    Position? estimatedPosition = trilaterate(points, distances);
+    double d1 = beacons[0].distance!;
+    double d2 = beacons[1].distance!;
+    double d3 = beacons[2].distance!;
 
-    if (estimatedPosition != null) {
-      double estimatedX = estimatedPosition.x;
-      double estimatedY = estimatedPosition.y;
-      return Position(x: estimatedX, y: estimatedY);
+    double A = x2 - x1;
+    double B = y2 - y1;
+    double C = x3 - x1;
+    double D = y3 - y1;
+    double E = ((d1 * d1) - (d2 * d2) - (x1 * x1) + (x2 * x2) - (y1 * y1) + (y2 * y2));
+    double F = ((d1 * d1) - (d3 * d3) - (x1 * x1) + (x3 * x3) - (y1 * y1) + (y3 * y3));
+
+    double denominator = (2 * ((A * D) - (B * C)));
+    double x = ((D * E) - (B * F)) / denominator;
+    double y = ((A * F) - (C * E)) / denominator;
+
+    if (x < 0 || x > MediaQuery.of(context).size.width ||
+        y < 0 || y > MediaQuery.of(context).size.height) {
+      return null; // The calculated position is out of bounds
     }
 
-    return null; // Trilateration failed
+    return Position(x: x, y: y);
   }
 
-  Position? trilaterate(List<Point> points, List<double> distance) {
-    if (points.length < 3 || points.length != distance.length) {
-      return null;
-    }
 
-    // Get the coordinates of the three beacons
-    Beacon p1 = beacons[0];
-    Beacon p2 = beacons[1];
-    Beacon p3 = beacons[2];
-
-    // Get the distances between the current position and the three beacons
-    double r1 = 25;
-    double r2 = 50;
-    double r3 = 70;
-
-    // Calculate the differences between the beacon coordinates
-    double p2p1x = p2.x - p1.x.toDouble();
-    double p2p1y = p2.y - p1.y.toDouble();
-    double p3p1x = p3.x - p1.x.toDouble();
-    double p3p1y = p3.y - p1.y.toDouble();
-
-    // Calculate the distance between the first two beacons
-    double d = pow(p2p1x, 2) + pow(p2p1y, 2).toDouble();
-    double i = sqrt(d);
-
-    // Calculate the unit vectors
-    double ex = p2p1x / i;
-    double ey = p2p1y / i;
-    double p3p1 = p3p1x * ex + p3p1y * ey;
-
-    // Calculate the coordinates of the estimated position
-    double x = (pow(r1, 2) - pow(r2, 2) + pow(i, 2)) / (2 * i);
-    double y = (pow(r1, 2) - pow(r3, 2) + pow(p3p1, 2) + pow(p3p1x, 2) + pow(p3p1y, 2)) / (2 * p3p1) - (p3p1x / p3p1) * x;
-
-    // Calculate the estimated position
-    double estimatedX = p1.x + ex * x + ey * y;
-    double estimatedY = p1.y + ey * x - ex * y;
-
-    return Position(x: estimatedX, y: estimatedY);
-  }
 }
 
 class Beacon {
-  final String id;
+  final int num;
   final double x;
   final double y;
   final double? distance;
 
-  Beacon({required this.id, required this.x, required this.y, this.distance});
+  Beacon({required this.num, required this.x, required this.y, this.distance});
 }
 
 class Position {
@@ -123,9 +103,9 @@ class Position {
 
 class MapPainter extends CustomPainter {
   final List<Beacon> beacons;
-  final Position? position;
+  final Position? currentPosition;
 
-  MapPainter({required this.beacons, required this.position});
+  MapPainter({required this.beacons, required this.currentPosition});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -138,13 +118,13 @@ class MapPainter extends CustomPainter {
     }
 
     // Draw current position
-    if (Position != null) {
-      canvas.drawCircle(Offset(position!.x, position!.y), 10.0, currentPositionPaint);
+    if (currentPosition != null) {
+      canvas.drawCircle(Offset(currentPosition!.x, currentPosition!.y), 10.0, currentPositionPaint);
     }
   }
 
   @override
   bool shouldRepaint(MapPainter oldDelegate) {
-    return oldDelegate.beacons != beacons || oldDelegate.position != Position;
+    return oldDelegate.beacons != beacons || oldDelegate.currentPosition != currentPosition;
   }
 }
