@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:f2/widgets.dart';
 
-
-
 class FlutterBlueApp extends StatefulWidget {
   @override
   State<FlutterBlueApp> createState() => _FlutterBlueAppState();
