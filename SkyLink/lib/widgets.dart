@@ -1,37 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
-class ScanResultTile extends StatelessWidget {
-  const ScanResultTile({Key? key, required this.result, this.onTap})
-      : super(key: key);
+var newrsssi;
+
+class ScanResultTile extends StatefulWidget {
+  const ScanResultTile({Key? key, required this.result, this.onTap}) : super(key: key);
+
 
   final ScanResult result;
   final VoidCallback? onTap;
+
+  @override
+  State<ScanResultTile> createState() => _ScanResultTileState();
+}
+
+class _ScanResultTileState extends State<ScanResultTile> {
   Widget _buildTitle(BuildContext context) {
-    if (result.device.name.isNotEmpty) {
+    if (widget.result.device.name.isNotEmpty) {
+      newrsssi = widget.result.rssi.toDouble();
       return Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            result.device.name,
+            widget.result.device.name,
             overflow: TextOverflow.ellipsis,
           ),
           Text(
-            'ID: ${result.device.id}',
+            'ID: ${widget.result.device.id}',
             style: Theme.of(context).textTheme.caption,
           ),
         ],
       );
     } else {
       return Text(
-        'ID: ${result.device.id}',
+        'ID: ${widget.result.device.id}',
         overflow: TextOverflow.ellipsis,
       );
     }
   }
-
-
 
   Widget _buildAdvRow(BuildContext context, String title, String value) {
     return Padding(
@@ -120,28 +127,28 @@ class ScanResultTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ExpansionTile(
       title: _buildTitle(context),
-      leading: Text(result.rssi.toString()),
+      leading: Text(widget.result.rssi.toString()),
       trailing: ElevatedButton(
         child: Text('CONNECT'),
         // color: Colors.black,
         // textColor: Colors.white,
-        onPressed: (result.advertisementData.connectable) ? onTap : null,
+        onPressed: (widget.result.advertisementData.connectable) ? widget.onTap : null,
       ),
       children: <Widget>[
         _buildAdvRow(
-            context, 'Complete Local Name', result.advertisementData.localName),
+            context, 'Complete Local Name', widget.result.advertisementData.localName),
         _buildAdvRow(context, 'Tx Power Level',
-            '${result.advertisementData.txPowerLevel ?? 'N/A'}'),
+            '${widget.result.advertisementData.txPowerLevel ?? 'N/A'}'),
         _buildAdvRow(context, 'Manufacturer Data',
-            getNiceManufacturerData(result.advertisementData.manufacturerData)),
+            getNiceManufacturerData(widget.result.advertisementData.manufacturerData)),
         _buildAdvRow(
             context,
             'Service UUIDs',
-            (result.advertisementData.serviceUuids.isNotEmpty)
-                ? result.advertisementData.serviceUuids.join(', ').toUpperCase()
+            (widget.result.advertisementData.serviceUuids.isNotEmpty)
+                ? widget.result.advertisementData.serviceUuids.join(', ').toUpperCase()
                 : 'N/A'),
         _buildAdvRow(context, 'Service Data',
-            getNiceServiceData(result.advertisementData.serviceData)),
+            getNiceServiceData(widget.result.advertisementData.serviceData)),
       ],
     );
   }
@@ -175,7 +182,7 @@ class ServiceTile extends StatelessWidget {
       return ListTile(
         title: Text('Service'),
         subtitle:
-            Text('0x${service.uuid.toString().toUpperCase().substring(4, 8)}'),
+        Text('0x${service.uuid.toString().toUpperCase().substring(4, 8)}'),
       );
     }
   }
@@ -190,11 +197,11 @@ class CharacteristicTile extends StatelessWidget {
 
   const CharacteristicTile(
       {Key? key,
-      required this.characteristic,
-      required this.descriptorTiles,
-      this.onReadPressed,
-      this.onWritePressed,
-      this.onNotificationPressed})
+        required this.characteristic,
+        required this.descriptorTiles,
+        this.onReadPressed,
+        this.onWritePressed,
+        this.onNotificationPressed})
       : super(key: key);
 
   @override
@@ -259,9 +266,9 @@ class DescriptorTile extends StatelessWidget {
 
   const DescriptorTile(
       {Key? key,
-      required this.descriptor,
-      this.onReadPressed,
-      this.onWritePressed})
+        required this.descriptor,
+        this.onReadPressed,
+        this.onWritePressed})
       : super(key: key);
 
   @override
