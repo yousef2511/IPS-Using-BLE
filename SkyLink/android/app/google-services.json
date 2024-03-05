@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "14256695345",
+    "project_id": "indoor-positioning-b4748",
+    "storage_bucket": "indoor-positioning-b4748.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:14256695345:android:f021dab7ee37633ee0cd10",
+        "android_client_info": {
+          "package_name": "com.example.f2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQQqYTLU0ih9yS2sz47tzW2ZNlMneGmps"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
